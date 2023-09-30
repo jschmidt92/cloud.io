@@ -1,0 +1,42 @@
+name: docker-build-and-publish
+
+on:
+  push:
+    branches: none
+  pull_request:
+    branches: none
+  workflow_dispatch:
+
+jobs:
+  build-and-publish-containers:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - auth
+          - blog
+          - character
+          - discovery
+          - gateway
+          - rss
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Generate a timestamp and store it in an environment variable
+      - name: Set Timestamp
+        id: timestamp
+        run: echo "::set-output name=timestamp::$(date +%s)"
+
+      - name: Build Docker Image
+        working-directory: ${{ matrix.service }}
+        run: |
+          docker build . --file Dockerfile --tag ghcr.io/${{ github.repository_owner }}/org-sog-hq-${{ matrix.service }}:${{ steps.timestamp.outputs.timestamp }}
+
+      - name: Log into Docker registry
+        run: echo "${{ secrets.WORKFLOW_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+
+      - name: Push Docker Image to GitHub Packages
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/org-sog-hq-${{ matrix.service }}:${{ steps.timestamp.outputs.timestamp }}
