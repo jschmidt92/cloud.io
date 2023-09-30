@@ -31,7 +31,8 @@ let characterServiceClient: any
 // setInterval(refreshCharacterService, 60 * 1000);
 
 characterServiceClient = axios.create({
-  baseURL: 'http://135.135.196.140/characters'
+  // baseURL: 'http://135.135.196.140/characters'
+  baseURL: 'http://character:3003'
 })
 
 interface CharacterClient {

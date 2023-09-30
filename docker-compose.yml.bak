@@ -1,16 +1,19 @@
 services:
   auth:
-    image: ghcr.io/jschmidt92/org-sog-hq-auth:1696034941
+    build:
+      context: ./auth
+      dockerfile: Dockerfile
+      target: production
     container_name: auth
-    command: npm run start:prod
+    command: npm run start:dev
     env_file:
       - ./auth/.env
     depends_on:
       - mongodb
       - discovery
-    # volumes:
-    #   - ./auth/:/app
-    #   - /auth/node_modules
+    volumes:
+      - ./auth/:/app
+      - /auth/node_modules
     expose:
       - 3001
     ports:
@@ -19,18 +22,21 @@ services:
       - microservices
     restart: unless-stopped
   blog:
-    image: ghcr.io/jschmidt92/org-sog-hq-blog:1696034942
+    build:
+      context: ./blog
+      dockerfile: Dockerfile
+      target: production
     container_name: blog
-    command: npm run start:prod
+    command: npm run start:dev
     env_file:
       - ./blog/.env
     depends_on:
       - mongodb
       - auth
       - discovery
-    # volumes:
-    #   - ./blog:/app
-    #   - /blog/node_modules
+    volumes:
+      - ./blog:/app
+      - /blog/node_modules
     expose:
       - 3002
     ports:
@@ -38,17 +44,20 @@ services:
     networks:
       - microservices
     restart: unless-stopped
-  character:
-    image: ghcr.io/jschmidt92/org-sog-hq-character:1696034942
-    container_name: character
-    command: npm run start:prod
+  characters:
+    build:
+      context: ./characters
+      dockerfile: Dockerfile
+      target: production
+    container_name: characters
+    command: npm run start:dev
     env_file:
-      - ./character/.env
+      - ./characters/.env
     depends_on:
       - discovery
-    # volumes:
-    #   - ./character:/app
-    #   - /character/node_modules
+    volumes:
+      - ./characters:/app
+      - /characters/node_modules
     expose:
       - 3003
     ports:
@@ -57,14 +66,17 @@ services:
       - microservices
     restart: unless-stopped
   discovery:
-    image: ghcr.io/jschmidt92/org-sog-hq-discovery:1696034943
+    build:
+      context: ./discovery
+      dockerfile: Dockerfile
+      target: production
     container_name: discovery
-    command: npm run start:prod
+    command: npm run start:dev
     env_file:
       - ./discovery/.env
-    # volumes:
-    #   - ./discovery/:/app
-    #   - /discovery/node_modules
+    volumes:
+      - ./discovery/:/app
+      - /discovery/node_modules
     expose:
       - 3000
     ports:
@@ -73,19 +85,22 @@ services:
       - microservices
     restart: unless-stopped
   gateway:
-    image: ghcr.io/jschmidt92/org-sog-hq-gateway:1696034942
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+      target: production
     container_name: gateway
-    command: npm run start:prod
+    command: npm run start:dev
     env_file:
       - ./gateway/.env
     depends_on:
       - auth
       - blog
-      - character
+      - characters
       - discovery
-    # volumes:
-    #   - ./gateway:/app
-    #   - /gateway/node_modules
+    volumes:
+      - ./gateway:/app
+      - /gateway/node_modules
     expose:
       - 80
     ports:
@@ -94,9 +109,12 @@ services:
       - microservices
     restart: unless-stopped
   rss:
-    image: ghcr.io/jschmidt92/org-sog-hq-rss:1696034943
+    build:
+      context: ./rss
+      dockerfile: Dockerfile
+      target: production
     container_name: rss
-    command: npm run start:prod
+    command: npm run start:dev
     env_file:
       - ./rss/.env
     depends_on:
