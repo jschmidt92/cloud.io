@@ -22,7 +22,6 @@
     "esm": "^3.2.25",
     "express": "^4.18.2",
     "semver": "^7.5.4",
-    "tsc": "^2.0.4",
     "typescript": "^5.1.6"
   },
   "devDependencies": {

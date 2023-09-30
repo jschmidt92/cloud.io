@@ -2,7 +2,7 @@ services:
   auth:
     image: ghcr.io/jschmidt92/org-sog-hq-auth:1696034941
     container_name: auth
-    command: npm run start:prod
+    command: npm run start:dev
     env_file:
       - ./auth/.env
     depends_on:
@@ -21,7 +21,7 @@ services:
   blog:
     image: ghcr.io/jschmidt92/org-sog-hq-blog:1696034942
     container_name: blog
-    command: npm run start:prod
+    command: npm run start:dev
     env_file:
       - ./blog/.env
     depends_on:
@@ -41,7 +41,7 @@ services:
   character:
     image: ghcr.io/jschmidt92/org-sog-hq-character:1696034942
     container_name: character
-    command: npm run start:prod
+    command: npm run start:dev
     env_file:
       - ./character/.env
     depends_on:
@@ -59,7 +59,7 @@ services:
   discovery:
     image: ghcr.io/jschmidt92/org-sog-hq-discovery:1696034943
     container_name: discovery
-    command: npm run start:prod
+    command: npm run start:dev
     env_file:
       - ./discovery/.env
     # volumes:
@@ -75,7 +75,7 @@ services:
   gateway:
     image: ghcr.io/jschmidt92/org-sog-hq-gateway:1696034942
     container_name: gateway
-    command: npm run start:prod
+    command: npm run start:dev
     env_file:
       - ./gateway/.env
     depends_on:
@@ -96,7 +96,7 @@ services:
   rss:
     image: ghcr.io/jschmidt92/org-sog-hq-rss:1696034943
     container_name: rss
-    command: npm run start:prod
+    command: npm run start:dev
     env_file:
       - ./rss/.env
     depends_on:
