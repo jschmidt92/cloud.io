@@ -1,0 +1,186 @@
+services:
+  auth:
+    build:
+      context: ./auth
+      dockerfile: Dockerfile
+      target: production
+    container_name: auth
+    command: npm run start:dev
+    env_file:
+      - ./auth/.env
+    depends_on:
+      - mongodb
+      - discovery
+    volumes:
+      - ./auth/:/app
+      - /auth/node_modules
+    expose:
+      - 3001
+    ports:
+      - '3001:3001'
+    networks:
+      - microservices
+    restart: unless-stopped
+  blog:
+    build:
+      context: ./blog
+      dockerfile: Dockerfile
+      target: production
+    container_name: blog
+    command: npm run start:dev
+    env_file:
+      - ./blog/.env
+    depends_on:
+      - mongodb
+      - auth
+      - discovery
+    volumes:
+      - ./blog:/app
+      - /blog/node_modules
+    expose:
+      - 3002
+    ports:
+      - '3002:3002'
+    networks:
+      - microservices
+    restart: unless-stopped
+  characters:
+    build:
+      context: ./characters
+      dockerfile: Dockerfile
+      target: production
+    container_name: characters
+    command: npm run start:dev
+    env_file:
+      - ./characters/.env
+    depends_on:
+      - discovery
+    volumes:
+      - ./characters:/app
+      - /characters/node_modules
+    expose:
+      - 3003
+    ports:
+      - '3003:3003'
+    networks:
+      - microservices
+    restart: unless-stopped
+  discovery:
+    build:
+      context: ./discovery
+      dockerfile: Dockerfile
+      target: production
+    container_name: discovery
+    command: npm run start:dev
+    env_file:
+      - ./discovery/.env
+    volumes:
+      - ./discovery/:/app
+      - /discovery/node_modules
+    expose:
+      - 3000
+    ports:
+      - '3000:3000'
+    networks:
+      - microservices
+    restart: unless-stopped
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+      target: production
+    container_name: gateway
+    command: npm run start:dev
+    env_file:
+      - ./gateway/.env
+    depends_on:
+      - auth
+      - blog
+      - characters
+      - discovery
+    volumes:
+      - ./gateway:/app
+      - /gateway/node_modules
+    expose:
+      - 80
+    ports:
+      - '80:80'
+    networks:
+      - microservices
+    restart: unless-stopped
+  rss:
+    build:
+      context: ./rss
+      dockerfile: Dockerfile
+      target: production
+    container_name: rss
+    command: npm run start:dev
+    env_file:
+      - ./rss/.env
+    depends_on:
+      - mongodb
+      - discovery
+    volumes:
+      - ./rss:/app
+      - /rss/node_modules
+    expose:
+      - 3004
+    ports:
+      - '3004:3004'
+    networks:
+      - microservices
+    restart: unless-stopped
+  arma-redis:
+    image: redis:latest
+    container_name: arma-redis
+    command: --requirepass ${REDIS_PASSWORD}
+    expose:
+      - 6379
+    ports:
+      - '6379:6379'
+    env_file: .env
+    networks:
+      - microservices
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_PASSWORD}
+    volumes:
+      - 'mongodb-master_data:/mongodb'
+    expose:
+      - 27017
+    ports:
+      - '27017:27017'
+    networks:
+      - microservices
+    restart: unless-stopped
+  mongodb-express:
+    image: mongo-express:latest
+    container_name: mongodb-express
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGODB_USER}
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGODB_PASSWORD}
+      - ME_CONFIG_MONGODB_URL=mongodb://${MONGODB_USER}:${MONGODB_PASSWORD}@mongodb:27017/
+    expose:
+      - 8081
+    ports:
+      - '8081:8081'
+    links:
+      - mongodb
+    depends_on:
+      - mongodb
+    networks:
+      - microservices
+    restart: unless-stopped
+
+networks:
+  microservices:
+    driver: bridge
+
+volumes:
+  mongodb-master_data:
+    driver: local

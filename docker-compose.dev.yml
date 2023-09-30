@@ -1,0 +1,221 @@
+services:
+  auth:
+    build:
+      context: ./auth
+      dockerfile: Dockerfile
+      target: development
+    container_name: auth
+    command: npm run start:dev
+    env_file:
+      - ./auth/.env
+    depends_on:
+      - mongodb-primary
+      - mongodb-secondary
+      - mongodb-arbiter
+      - rabbitmq
+    volumes:
+      - ./auth/:/app
+      - /auth/node_modules
+    expose:
+      - 3001
+    ports:
+      - '3001:3001'
+    networks:
+      - microservices
+    restart: unless-stopped
+  blog:
+    build:
+      context: ./blog
+      dockerfile: Dockerfile
+      target: development
+    container_name: blog
+    command: npm run start:dev
+    env_file:
+      - ./blog/.env
+    depends_on:
+      - mongodb-primary
+      - mongodb-secondary
+      - mongodb-arbiter
+      - auth
+      - rabbitmq
+    volumes:
+      - ./blog:/app
+      - /blog/node_modules
+    expose:
+      - 3002
+    ports:
+      - '3002:3002'
+    networks:
+      - microservices
+    restart: unless-stopped
+  characters:
+    build:
+      context: ./characters
+      dockerfile: Dockerfile
+      target: development
+    container_name: characters
+    command: npm run start:dev
+    env_file:
+      - ./characters/.env
+    depends_on:
+      - mongodb-primary
+      - mongodb-secondary
+      - mongodb-arbiter
+      - auth
+      - rabbitmq
+    volumes:
+      - ./characters:/app
+      - /characters/node_modules
+    expose:
+      - 3003
+    ports:
+      - '3003:3003'
+    networks:
+      - microservices
+    restart: unless-stopped
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+      target: development
+    container_name: gateway
+    command: npm run start:dev
+    env_file:
+      - ./gateway/.env
+    depends_on:
+      - auth
+      - blog
+      - characters
+      - rabbitmq
+    volumes:
+      - ./gateway:/app
+      - /gateway/node_modules
+    expose:
+      - 80
+    ports:
+      - '80:80'
+    networks:
+      - microservices
+    restart: unless-stopped
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    expose:
+      - 5672
+      - 15672
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    networks:
+      - microservices
+    restart: unless-stopped
+  rss:
+    build:
+      context: ./rss
+      dockerfile: Dockerfile
+      target: development
+    container_name: rss
+    command: npm run start:dev
+    env_file:
+      - ./rss/.env
+    depends_on:
+      - mongodb-primary
+      - mongodb-secondary
+      - mongodb-arbiter
+      - rabbitmq
+    volumes:
+      - ./rss:/app
+      - /rss/node_modules
+    expose:
+      - 3004
+    ports:
+      - '3004:3004'
+    networks:
+      - microservices
+    restart: unless-stopped
+
+  mongodb-primary:
+    image: docker.io/bitnami/mongodb:latest
+    container_name: mongodb-primary
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - MONGODB_ADVERTISED_HOSTNAME=mongodb-primary
+      - MONGODB_REPLICA_SET_MODE=primary
+      - MONGODB_ROOT_PASSWORD=${MONGODB_PASSWORD}
+      - MONGODB_REPLICA_SET_KEY=${MONGODB_REPLICASETKEY}
+    volumes:
+      - 'mongodb-master_data:/bitnami/mongodb'
+    expose:
+      - 27017
+    ports:
+      - '27017:27017'
+    networks:
+      - microservices
+    restart: unless-stopped
+  mongodb-secondary:
+    image: docker.io/bitnami/mongodb:latest
+    container_name: mongodb-secondary
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - MONGODB_ADVERTISED_HOSTNAME=mongodb-secondary
+      - MONGODB_REPLICA_SET_MODE=secondary
+      - MONGODB_INITIAL_PRIMARY_HOST=mongodb-primary
+      - MONGODB_INITIAL_PRIMARY_ROOT_PASSWORD=${MONGODB_PASSWORD}
+      - MONGODB_REPLICA_SET_KEY=${MONGODB_REPLICASETKEY}
+    networks:
+      - microservices
+  mongodb-arbiter:
+    image: docker.io/bitnami/mongodb:latest
+    container_name: mongodb-arbiter
+    depends_on:
+      - mongodb-primary
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - MONGODB_ADVERTISED_HOSTNAME=mongodb-arbiter
+      - MONGODB_REPLICA_SET_MODE=arbiter
+      - MONGODB_INITIAL_PRIMARY_HOST=mongodb-primary
+      - MONGODB_INITIAL_PRIMARY_ROOT_PASSWORD=${MONGODB_PASSWORD}
+      - MONGODB_REPLICA_SET_KEY=${MONGODB_REPLICASETKEY}
+    networks:
+      - microservices
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongodb-express
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongodb-primary
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGODB_USER}
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGODB_PASSWORD}
+      - ME_CONFIG_MONGODB_URL=mongodb://${MONGODB_USER}:${MONGODB_PASSWORD}@mongodb-primary:27017/
+    expose:
+      - 8081
+    ports:
+      - '8081:8081'
+    links:
+      - mongodb-primary
+    depends_on:
+      - mongodb-primary
+      - mongodb-secondary
+      - mongodb-arbiter
+    networks:
+      - microservices
+    restart: unless-stopped
+  arma-redis:
+    image: redis:alpine
+    container_name: arma-redis
+    command: --requirepass ${REDIS_PASSWORD}
+    expose:
+      - 6379
+    ports:
+      - '6379:6379'
+    env_file: .env
+    networks:
+      - microservices
+    restart: unless-stopped
+
+networks:
+  microservices:
+    driver: bridge
+
+volumes:
+  mongodb-master_data:
+    driver: local

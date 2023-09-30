@@ -1,0 +1,51 @@
+import amqp, { Message } from 'amqplib/callback_api'
+
+const createMQConsumer = (amqpURl: string, queueName: string) => {
+  console.log('Connecting to RabbitMQ...')
+  return () => {
+    amqp.connect(amqpURl, (errConn, conn) => {
+      if (errConn) {
+        throw errConn
+      }
+
+      conn.createChannel((errChan, chan) => {
+        if (errChan) {
+          throw errChan
+        }
+
+        console.log('Connected to RabbitMQ')
+        chan.assertQueue(queueName, { durable: true })
+        chan.consume(
+          queueName,
+          (msg: Message | null) => {
+            if (msg) {
+              const parsed = JSON.parse(msg.content.toString())
+              switch (parsed.action) {
+                case 'CREATECHARACTER':
+                  console.log('Consuming CREATECHARACTER action', parsed.data)
+                  break
+                case 'FETCHCHARACTERS':
+                  console.log('Consuming FETCHCHARACTERS action', parsed.data)
+                  break
+                case 'FETCHCHARACTER':
+                  console.log('Consuming FETCHCHARACTER action', parsed.data)
+                  break
+                case 'UPDATECHARACTER':
+                  console.log('Consuming UPDATECHARACTER action', parsed.data)
+                  break
+                case 'DELETECHARACTER':
+                  console.log('Consuming DELETECHARACTER action', parsed.data)
+                  break
+                default:
+                  break
+              }
+            }
+          },
+          { noAck: true }
+        )
+      })
+    })
+  }
+}
+
+export default createMQConsumer
