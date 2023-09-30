@@ -25,6 +25,7 @@
     "rimraf": "^5.0.1",
     "steam-web": "^0.7.0",
     "tsc": "^2.0.4",
+    "typescript": "^5.2.2",
     "winston": "^3.10.0"
   },
   "devDependencies": {
@@ -42,7 +43,6 @@
     "eslint": "^8.48.0",
     "nodemon": "^3.0.1",
     "prettier": "^3.0.1",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.2.2"
+    "ts-node": "^10.9.1"
   }
 }
